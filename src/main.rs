@@ -1,13 +1,15 @@
 mod game_board;
 mod tile_state;
-mod turn;
-mod decision_ai;
+mod turn_info;
+mod npc;
+mod human;
 
 use game_board::GameBoard;
-use turn::Turn;
+use tile_state::TileState;
 
 fn main() {
-    let mut game_board = GameBoard::new(Some(Turn::Cross));
+    let mut game_board = GameBoard::new(Some(TileState::Cross));
+    game_board.play();
     println!("{}", game_board);
 
 }

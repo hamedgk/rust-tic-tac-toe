@@ -7,6 +7,7 @@ pub enum TileState {
     Unchecked,
 }
 
+#[allow(dead_code)]
 impl TileState {
     pub fn is_cross(&self) -> bool{
         matches!(*self, TileState::Cross)
