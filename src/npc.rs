@@ -1,12 +1,12 @@
 use crate::game_board::GameBoard;
-use crate::game_board::POSSIBLE_MOVES;
+use crate::possible_moves::POSSIBLE_MOVES;
 
 fn npc_deffense(game_board: &GameBoard) -> Option<(usize, usize)> {
     unsafe {
         for operation in POSSIBLE_MOVES.iter_mut() {
             match operation {
                 Some(ops) => {
-                    let result = (ops.possible_deffense_action)(game_board);
+                    let result = (ops.0)(game_board);
                     match result {
                         Some(_) => {
                             //skip this operation next time
