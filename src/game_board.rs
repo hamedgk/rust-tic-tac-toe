@@ -2,41 +2,8 @@ use crate::human::human_move;
 use crate::npc::npc_move;
 use crate::tile_state::TileState;
 use crate::turn_info::TurnInfo;
-use crate::npc_deffense_logic;
-use crate::win_check;
+use crate::possible_moves::{POSSIBLE_MOVES, reset_possible_moves};
 use std::fmt;
-
-
-type NPCDeffenseAction = fn(&GameBoard) -> Option<(usize, usize)>;
-type WinCheckAction = fn(&GameBoard) -> bool;
-
-pub struct MatrixOps {
-    pub possible_deffense_action: NPCDeffenseAction,
-    pub possible_win_check_action: WinCheckAction,
-}
-
-impl MatrixOps {
-    const fn new(
-        possible_deffense_action: NPCDeffenseAction,
-        possible_win_check_action: WinCheckAction,
-    ) -> Self {
-        Self {
-            possible_deffense_action,
-            possible_win_check_action,
-        }
-    }
-}
-
-pub static mut POSSIBLE_MOVES: [Option<MatrixOps>; 8] = [
-    Some(MatrixOps::new(npc_deffense_logic::rows::<0>, win_check::rows::<0>)),
-    Some(MatrixOps::new(npc_deffense_logic::rows::<1>, win_check::rows::<1>)),
-    Some(MatrixOps::new(npc_deffense_logic::rows::<2>, win_check::rows::<2>)),
-    Some(MatrixOps::new(npc_deffense_logic::columns::<0>, win_check::columns::<0>)),
-    Some(MatrixOps::new(npc_deffense_logic::columns::<1>, win_check::columns::<1>)),
-    Some(MatrixOps::new(npc_deffense_logic::columns::<2>, win_check::columns::<2>)),
-    Some(MatrixOps::new(npc_deffense_logic::primary_diagonal, win_check::primary_diagonal)),
-    Some(MatrixOps::new(npc_deffense_logic::secondary_diagonal, win_check::secondary_diagonal)),
-];
 
 
 pub struct GameBoard {
@@ -59,7 +26,7 @@ impl GameBoard {
             for possible_move in POSSIBLE_MOVES.iter(){
                 match possible_move{
                 Some(ops) => {
-                    if (ops.possible_win_check_action)(self){
+                    if (ops.1)(self){
                         return Some(self.turn_info.current_turn)
                     }
                 },
@@ -111,7 +78,10 @@ impl GameBoard {
                     self.game_step();
                     println!("{}", self);
                 }
-                None => break,
+                None => {
+                    println!("tie");
+                    break;
+                },
             }
         }
     }
@@ -124,8 +94,9 @@ impl GameBoard {
 
         self.play_number = 0;
         self.turn_info = TurnInfo::init_turn_info(starter);
+        reset_possible_moves();
+        }
     }
-}
 
 impl fmt::Display for GameBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
