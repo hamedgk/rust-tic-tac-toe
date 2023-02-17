@@ -2,55 +2,77 @@ use crate::human::human_move;
 use crate::npc::npc_move;
 use crate::tile_state::TileState;
 use crate::turn_info::TurnInfo;
+use crate::npc_deffense_logic;
+use crate::win_check;
 use std::fmt;
 
-pub(crate) struct GameBoard {
-    pub(crate) board_buffer: [[TileState; 3]; 3],
-    pub(crate) play_number: u8,
-    pub(crate) turn_info: TurnInfo,
+
+type NPCDeffenseAction = fn(&GameBoard) -> Option<(usize, usize)>;
+type WinCheckAction = fn(&GameBoard) -> bool;
+
+pub struct MatrixOps {
+    pub possible_deffense_action: NPCDeffenseAction,
+    pub possible_win_check_action: WinCheckAction,
+}
+
+impl MatrixOps {
+    const fn new(
+        possible_deffense_action: NPCDeffenseAction,
+        possible_win_check_action: WinCheckAction,
+    ) -> Self {
+        Self {
+            possible_deffense_action,
+            possible_win_check_action,
+        }
+    }
+}
+
+pub static mut POSSIBLE_MOVES: [Option<MatrixOps>; 8] = [
+    Some(MatrixOps::new(npc_deffense_logic::rows::<0>, win_check::rows::<0>)),
+    Some(MatrixOps::new(npc_deffense_logic::rows::<1>, win_check::rows::<1>)),
+    Some(MatrixOps::new(npc_deffense_logic::rows::<2>, win_check::rows::<2>)),
+    Some(MatrixOps::new(npc_deffense_logic::columns::<0>, win_check::columns::<0>)),
+    Some(MatrixOps::new(npc_deffense_logic::columns::<1>, win_check::columns::<1>)),
+    Some(MatrixOps::new(npc_deffense_logic::columns::<2>, win_check::columns::<2>)),
+    Some(MatrixOps::new(npc_deffense_logic::primary_diagonal, win_check::primary_diagonal)),
+    Some(MatrixOps::new(npc_deffense_logic::secondary_diagonal, win_check::secondary_diagonal)),
+];
+
+
+pub struct GameBoard {
+    pub board_buffer: [[TileState; 3]; 3],
+    pub play_number: u8,
+    pub turn_info: TurnInfo,
 }
 
 impl GameBoard {
     pub fn new(starter: Option<TileState>) -> Self {
-
         Self {
-            board_buffer: [[TileState::Unchecked; 3]; 3],
+            board_buffer: [[TileState::Empty; 3]; 3],
             play_number: 0,
-            turn_info: Self::init_turn_info(starter),
+            turn_info: TurnInfo::init_turn_info(starter),
         }
     }
 
-    fn init_turn_info(starter: Option<TileState>) -> TurnInfo{
-        use TileState::*;
-        match starter {
-            Some(tile_state) => match tile_state {
-                Cross => TurnInfo {
-                    human: Cross,
-                    npc: Circle,
-                    current_turn: Cross,
+    fn win_check(&self) -> Option<TileState> {
+        unsafe{
+            for possible_move in POSSIBLE_MOVES.iter(){
+                match possible_move{
+                Some(ops) => {
+                    if (ops.possible_win_check_action)(self){
+                        return Some(self.turn_info.current_turn)
+                    }
                 },
-                Circle => TurnInfo {
-                    human: Circle,
-                    npc: Cross,
-                    current_turn: Circle,
-                },
-                Unchecked => TurnInfo {
-                    human: Cross,
-                    npc: Circle,
-                    current_turn: Cross,
-                },
-            },
-            None => TurnInfo {
-                human: Cross,
-                npc: Circle,
-                current_turn: Cross,
-            },
+                None => continue,
+                }
+            }
         }
+        None
     }
 
     fn draw(&mut self, coords: (usize, usize)) -> Result<(usize, usize), &str> {
         let board = &mut self.board_buffer[coords.0][coords.1];
-        if !matches!(board, TileState::Unchecked) {
+        if !matches!(board, TileState::Empty) {
             return Err("this tile is already filled");
         }
         *board = self.turn_info.current_turn;
@@ -71,6 +93,10 @@ impl GameBoard {
                 }
                 eprintln!("please choose empty tile");
             }
+            if let Some(turn) = self.win_check(){
+                println!("winner: {}", turn);
+                break;
+            }
             self.game_step();
             println!("{}", self);
 
@@ -78,6 +104,10 @@ impl GameBoard {
             match npc_choice {
                 Some(coords) => {
                     self.draw(coords).expect("npc went wrong!");
+                    if let Some(turn) = self.win_check(){
+                        println!("winner: {}", turn);
+                        break;
+                    }
                     self.game_step();
                     println!("{}", self);
                 }
@@ -86,13 +116,14 @@ impl GameBoard {
         }
     }
 
+    #[allow(dead_code)]
     pub fn reset_game(&mut self, starter: Option<TileState>) {
         self.board_buffer.iter_mut().flatten().for_each(|tile| {
-            *tile = TileState::Unchecked;
+            *tile = TileState::Empty;
         });
 
         self.play_number = 0;
-        self.turn_info = Self::init_turn_info(starter);
+        self.turn_info = TurnInfo::init_turn_info(starter);
     }
 }
 

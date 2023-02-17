@@ -1,10 +1,10 @@
 use std::fmt;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum TileState {
     Cross,
     Circle,
-    Unchecked,
+    Empty,
 }
 
 #[allow(dead_code)]
@@ -18,7 +18,7 @@ impl TileState {
     }
 
     pub fn is_unchecked(&self) -> bool{
-        matches!(*self, TileState::Unchecked)
+        matches!(*self, TileState::Empty)
     }
 }
 
@@ -27,7 +27,7 @@ impl fmt::Display for TileState {
         let choice = match *self {
             Self::Circle => 'O',
             Self::Cross => 'X',
-            Self::Unchecked => '_',
+            Self::Empty => '_',
         };
         write!(f, "{}", choice)
     }

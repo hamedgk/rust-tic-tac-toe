@@ -13,7 +13,35 @@ impl TurnInfo {
         self.current_turn = match self.current_turn {
             Cross => Circle,
             Circle => Cross,
-            Unchecked => {unreachable!("Unchecked turn??")},
+            Empty => {unreachable!("Empty turn??")},
+        }
+    }
+
+    pub fn init_turn_info(starter: Option<TileState>) -> Self{
+        use TileState::*;
+        match starter {
+            Some(tile_state) => match tile_state {
+                Cross => TurnInfo {
+                    human: Cross,
+                    npc: Circle,
+                    current_turn: Cross,
+                },
+                Circle => TurnInfo {
+                    human: Circle,
+                    npc: Cross,
+                    current_turn: Circle,
+                },
+                Empty => TurnInfo {
+                    human: Cross,
+                    npc: Circle,
+                    current_turn: Cross,
+                },
+            },
+            None => TurnInfo {
+                human: Cross,
+                npc: Circle,
+                current_turn: Cross,
+            },
         }
     }
 }

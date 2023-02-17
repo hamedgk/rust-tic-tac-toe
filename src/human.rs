@@ -8,9 +8,10 @@ fn trim_newline(s: &mut String) {
     s.truncate(s.len() - 2);
 }
 
-fn get_user_input(str_buffer: &mut String) -> (usize, usize){
-    io::stdin().read_line(str_buffer).unwrap();
-    trim_newline(str_buffer);
+pub fn human_move() -> (usize, usize){
+    let mut str_buffer = String::new();    
+    io::stdin().read_line(&mut str_buffer).unwrap();
+    trim_newline(&mut str_buffer);
     //todo!("input validation");
 
     let numbered = str_buffer.parse::<usize>().unwrap();
@@ -20,7 +21,3 @@ fn get_user_input(str_buffer: &mut String) -> (usize, usize){
     (x, y)
 }
 
-pub(crate) fn human_move() -> (usize, usize) {
-    let mut str_buffer = String::new();    
-    get_user_input(&mut str_buffer)
-}
