@@ -54,6 +54,7 @@ impl GameBoard {
     pub fn play(&mut self) {
         loop {
             loop {
+                println!("enter choice e.g 11 : ");
                 let human_choice = human_move();
                 if self.draw(human_choice).is_ok() {
                     break;
